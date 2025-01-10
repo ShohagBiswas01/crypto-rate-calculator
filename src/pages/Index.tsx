@@ -1,12 +1,61 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React, { useEffect } from 'react';
+import CryptoConverter from '@/components/CryptoConverter';
+
+declare global {
+  interface Window {
+    adsbygoogle: any[];
+  }
+}
 
 const Index = () => {
+  useEffect(() => {
+    // Initialize AdMob
+    const script = document.createElement('script');
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9162745056113716';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+
+    // Initialize banner ad
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (err) {
+      console.error('AdMob error:', err);
+    }
+
+    // Initialize interstitial ad
+    const interstitialScript = document.createElement('script');
+    interstitialScript.innerHTML = `
+      let interstitialAd;
+      function loadInterstitial() {
+        interstitialAd = new google.ads.InterstitialAd();
+        interstitialAd.setAdUnitId('ca-app-pub-9162745056113716/6893087733');
+        interstitialAd.load();
+      }
+      loadInterstitial();
+    `;
+    document.head.appendChild(interstitialScript);
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background pb-20">
+      <header className="bg-primary text-white p-4 shadow-md">
+        <h1 className="text-2xl font-bold text-center">Crypto Rate</h1>
+      </header>
+      
+      <main className="container mx-auto px-4 py-8">
+        <CryptoConverter />
+      </main>
+
+      {/* AdMob Banner */}
+      <ins
+        className="adsbygoogle"
+        style={{ display: 'block' }}
+        data-ad-client="ca-app-pub-9162745056113716"
+        data-ad-slot="1821590421"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
     </div>
   );
 };
