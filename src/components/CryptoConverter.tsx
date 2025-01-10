@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { Calculator, ArrowUpDown } from 'lucide-react';
 
 const MAJOR_CRYPTOS = [
@@ -78,7 +77,6 @@ const CryptoConverter = () => {
     };
   }, []);
 
-  // Fetch crypto rate
   const { data: rateData, isLoading } = useQuery({
     queryKey: ['cryptoRate', selectedCrypto, selectedCurrency],
     queryFn: async () => {
@@ -92,7 +90,7 @@ const CryptoConverter = () => {
       return data[selectedCrypto][selectedCurrency.toLowerCase()];
     },
     refetchInterval: 30000,
-    enabled: !useCustomRate, // Only fetch when not using custom rate
+    enabled: !useCustomRate,
   });
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,89 +143,88 @@ const CryptoConverter = () => {
   return (
     <div className="w-full max-w-md mx-auto px-4 pb-20 animate-fade-in">
       <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
-          <div className="flex flex-col sm:flex-row items-center gap-2">
-            {!isReversed ? (
-              <>
-                <select
-                  value={selectedCrypto}
-                  onChange={(e) => setSelectedCrypto(e.target.value)}
-                  className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
-                >
-                  {MAJOR_CRYPTOS.map((crypto) => (
-                    <option key={crypto.id} value={crypto.id}>
-                      {crypto.symbol} - {crypto.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={toggleDirection}
-                  className="p-2 rounded-full hover:bg-gray-100 flex-shrink-0"
-                >
-                  <ArrowUpDown className="w-5 h-5" />
-                </button>
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
-                >
-                  {MAJOR_CURRENCIES.map((currency) => (
-                    <option key={currency.code} value={currency.code}>
-                      {currency.code} - {currency.name}
-                    </option>
-                  ))}
-                </select>
-              </>
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          {!isReversed ? (
+            <>
+              <select
+                value={selectedCrypto}
+                onChange={(e) => setSelectedCrypto(e.target.value)}
+                className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
+              >
+                {MAJOR_CRYPTOS.map((crypto) => (
+                  <option key={crypto.id} value={crypto.id}>
+                    {crypto.symbol} - {crypto.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={toggleDirection}
+                className="p-2 rounded-full hover:bg-gray-100 flex-shrink-0"
+              >
+                <ArrowUpDown className="w-5 h-5" />
+              </button>
+              <select
+                value={selectedCurrency}
+                onChange={(e) => setSelectedCurrency(e.target.value)}
+                className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
+              >
+                {MAJOR_CURRENCIES.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} - {currency.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <select
+                value={selectedCurrency}
+                onChange={(e) => setSelectedCurrency(e.target.value)}
+                className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
+              >
+                {MAJOR_CURRENCIES.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} - {currency.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={toggleDirection}
+                className="p-2 rounded-full hover:bg-gray-100 flex-shrink-0"
+              >
+                <ArrowUpDown className="w-5 h-5" />
+              </button>
+              <select
+                value={selectedCrypto}
+                onChange={(e) => setSelectedCrypto(e.target.value)}
+                className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
+              >
+                {MAJOR_CRYPTOS.map((crypto) => (
+                  <option key={crypto.id} value={crypto.id}>
+                    {crypto.symbol} - {crypto.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+        </div>
+
+        <div className="text-center text-2xl font-bold">=</div>
+
+        <div className="relative w-full">
+          <input
+            type="text"
+            value={amount}
+            onChange={handleAmountChange}
+            className="w-full p-2 border rounded-md"
+            placeholder="Enter amount"
+          />
+          <div className="mt-2 text-center text-xl font-semibold break-words">
+            {isLoading ? (
+              <div className="animate-pulse">Loading...</div>
             ) : (
-              <>
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
-                >
-                  {MAJOR_CURRENCIES.map((currency) => (
-                    <option key={currency.code} value={currency.code}>
-                      {currency.code} - {currency.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={toggleDirection}
-                  className="p-2 rounded-full hover:bg-gray-100 flex-shrink-0"
-                >
-                  <ArrowUpDown className="w-5 h-5" />
-                </button>
-                <select
-                  value={selectedCrypto}
-                  onChange={(e) => setSelectedCrypto(e.target.value)}
-                  className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
-                >
-                  {MAJOR_CRYPTOS.map((crypto) => (
-                    <option key={crypto.id} value={crypto.id}>
-                      {crypto.symbol} - {crypto.name}
-                    </option>
-                  ))}
-                </select>
-              </>
+              `${calculatedAmount()} ${isReversed ? MAJOR_CRYPTOS.find(c => c.id === selectedCrypto)?.symbol : selectedCurrency}`
             )}
-          </div>
-
-          <div className="text-center text-2xl font-bold">=</div>
-
-          <div className="relative w-full">
-            <input
-              type="text"
-              value={amount}
-              onChange={handleAmountChange}
-              className="w-full p-2 border rounded-md"
-              placeholder="Enter amount"
-            />
-            <div className="mt-2 text-center text-xl font-semibold break-words">
-              {isLoading ? (
-                <div className="animate-pulse">Loading...</div>
-              ) : (
-                `${calculatedAmount()} ${isReversed ? MAJOR_CRYPTOS.find(c => c.id === selectedCrypto)?.symbol : selectedCurrency}`
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -282,7 +279,6 @@ const CryptoConverter = () => {
         </div>
       )}
 
-      {/* AdMob Banner */}
       <div className="fixed bottom-0 left-0 right-0 bg-white p-2 shadow-lg">
         <div id="banner-ad" className="w-full h-16 bg-gray-200 flex items-center justify-center">
           {/* AdMob Banner will be inserted here */}
