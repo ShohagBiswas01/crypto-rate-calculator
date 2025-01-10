@@ -47,13 +47,20 @@ const CryptoConverter = () => {
 
   // Load interstitial ad
   useEffect(() => {
+    if (typeof window.google === 'undefined') {
+      console.log('Google Ads not loaded yet');
+      return;
+    }
+
     const script = document.createElement('script');
     script.innerHTML = `
       let interstitialAd;
       function loadInterstitial() {
-        interstitialAd = new google.ads.InterstitialAd();
-        interstitialAd.setAdUnitId('ca-app-pub-9162745056113716/6893087733');
-        interstitialAd.load();
+        if (typeof google !== 'undefined') {
+          interstitialAd = new google.ads.InterstitialAd();
+          interstitialAd.setAdUnitId('ca-app-pub-9162745056113716/6893087733');
+          interstitialAd.load();
+        }
       }
       loadInterstitial();
     `;

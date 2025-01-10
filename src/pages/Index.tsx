@@ -22,19 +22,6 @@ const Index = () => {
     } catch (err) {
       console.error('AdMob error:', err);
     }
-
-    // Initialize interstitial ad
-    const interstitialScript = document.createElement('script');
-    interstitialScript.innerHTML = `
-      let interstitialAd;
-      function loadInterstitial() {
-        interstitialAd = new google.ads.InterstitialAd();
-        interstitialAd.setAdUnitId('ca-app-pub-9162745056113716/6893087733');
-        interstitialAd.load();
-      }
-      loadInterstitial();
-    `;
-    document.head.appendChild(interstitialScript);
   }, []);
 
   return (
@@ -51,7 +38,7 @@ const Index = () => {
       <ins
         className="adsbygoogle"
         style={{ display: 'block' }}
-        data-ad-client="ca-app-pub-9162745056113716"
+        data-ad-client="ca-pub-9162745056113716"
         data-ad-slot="1821590421"
         data-ad-format="auto"
         data-full-width-responsive="true"
