@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Calculator, ArrowsUpDown } from 'lucide-react';
+import { Calculator, ArrowUpDown } from 'lucide-react';
 
 const MAJOR_CRYPTOS = [
   { id: 'tether', symbol: 'USDT', name: 'Tether' },
@@ -134,7 +134,7 @@ const CryptoConverter = () => {
                   onClick={toggleDirection}
                   className="p-2 rounded-full hover:bg-gray-100"
                 >
-                  <ArrowsUpDown className="w-5 h-5" />
+                  <ArrowUpDown className="w-5 h-5" />
                 </button>
                 <select
                   value={selectedCurrency}
@@ -165,7 +165,7 @@ const CryptoConverter = () => {
                   onClick={toggleDirection}
                   className="p-2 rounded-full hover:bg-gray-100"
                 >
-                  <ArrowsUpDown className="w-5 h-5" />
+                  <ArrowUpDown className="w-5 h-5" />
                 </button>
                 <select
                   value={selectedCrypto}
