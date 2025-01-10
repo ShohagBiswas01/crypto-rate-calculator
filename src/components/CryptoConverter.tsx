@@ -234,7 +234,7 @@ const CryptoConverter = () => {
         className="w-full bg-primary text-white p-3 rounded-lg flex items-center justify-center gap-2 mb-4"
       >
         <Calculator className="w-5 h-5" />
-        {showCalculator ? 'Hide Calculator' : 'Show Calculator'}
+        {showCalculator ? 'Hide Custom Rate' : 'Show Custom Rate'}
       </button>
 
       {showCalculator && (
