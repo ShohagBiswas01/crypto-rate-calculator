@@ -113,16 +113,16 @@ const CryptoConverter = () => {
   };
 
   return (
-    <div className="p-4 max-w-md mx-auto animate-fade-in">
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
+    <div className="w-full max-w-md mx-auto px-4 pb-20 animate-fade-in">
+      <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div className="flex flex-col space-y-4">
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
             {!isReversed ? (
               <>
                 <select
                   value={selectedCrypto}
                   onChange={(e) => setSelectedCrypto(e.target.value)}
-                  className="flex-1 p-2 border rounded-md bg-gray-50"
+                  className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
                 >
                   {MAJOR_CRYPTOS.map((crypto) => (
                     <option key={crypto.id} value={crypto.id}>
@@ -132,14 +132,14 @@ const CryptoConverter = () => {
                 </select>
                 <button
                   onClick={toggleDirection}
-                  className="p-2 rounded-full hover:bg-gray-100"
+                  className="p-2 rounded-full hover:bg-gray-100 flex-shrink-0"
                 >
                   <ArrowUpDown className="w-5 h-5" />
                 </button>
                 <select
                   value={selectedCurrency}
                   onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="flex-1 p-2 border rounded-md bg-gray-50"
+                  className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
                 >
                   {MAJOR_CURRENCIES.map((currency) => (
                     <option key={currency.code} value={currency.code}>
@@ -153,7 +153,7 @@ const CryptoConverter = () => {
                 <select
                   value={selectedCurrency}
                   onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="flex-1 p-2 border rounded-md bg-gray-50"
+                  className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
                 >
                   {MAJOR_CURRENCIES.map((currency) => (
                     <option key={currency.code} value={currency.code}>
@@ -163,14 +163,14 @@ const CryptoConverter = () => {
                 </select>
                 <button
                   onClick={toggleDirection}
-                  className="p-2 rounded-full hover:bg-gray-100"
+                  className="p-2 rounded-full hover:bg-gray-100 flex-shrink-0"
                 >
                   <ArrowUpDown className="w-5 h-5" />
                 </button>
                 <select
                   value={selectedCrypto}
                   onChange={(e) => setSelectedCrypto(e.target.value)}
-                  className="flex-1 p-2 border rounded-md bg-gray-50"
+                  className="w-full sm:w-[45%] p-2 border rounded-md bg-gray-50 text-sm"
                 >
                   {MAJOR_CRYPTOS.map((crypto) => (
                     <option key={crypto.id} value={crypto.id}>
@@ -184,7 +184,7 @@ const CryptoConverter = () => {
 
           <div className="text-center text-2xl font-bold">=</div>
 
-          <div className="relative">
+          <div className="relative w-full">
             <input
               type="text"
               value={amount}
@@ -192,7 +192,7 @@ const CryptoConverter = () => {
               className="w-full p-2 border rounded-md"
               placeholder="Enter amount"
             />
-            <div className="mt-2 text-center text-xl font-semibold">
+            <div className="mt-2 text-center text-xl font-semibold break-words">
               {isLoading ? (
                 <div className="animate-pulse">Loading...</div>
               ) : (
@@ -212,7 +212,7 @@ const CryptoConverter = () => {
       </button>
 
       {showCalculator && (
-        <div className="bg-white rounded-lg shadow-lg p-6 animate-slide-up">
+        <div className="bg-white rounded-lg shadow-lg p-4 animate-slide-up">
           <div className="grid grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0, 'C'].map((key) => (
               <button
