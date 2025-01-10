@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Calculator } from 'lucide-react';
+import { Calculator, ArrowsUpDown } from 'lucide-react';
 
 const MAJOR_CRYPTOS = [
   { id: 'tether', symbol: 'USDT', name: 'Tether' },
@@ -12,11 +12,24 @@ const MAJOR_CRYPTOS = [
   { id: 'usd-coin', symbol: 'USDC', name: 'USD Coin' },
 ];
 
+const MAJOR_CURRENCIES = [
+  { code: 'USD', name: 'US Dollar' },
+  { code: 'EUR', name: 'Euro' },
+  { code: 'GBP', name: 'British Pound' },
+  { code: 'JPY', name: 'Japanese Yen' },
+  { code: 'AUD', name: 'Australian Dollar' },
+  { code: 'CAD', name: 'Canadian Dollar' },
+  { code: 'CHF', name: 'Swiss Franc' },
+  { code: 'CNY', name: 'Chinese Yuan' },
+  { code: 'INR', name: 'Indian Rupee' },
+];
+
 const CryptoConverter = () => {
   const [selectedCrypto, setSelectedCrypto] = useState('tether');
-  const [userCurrency, setUserCurrency] = useState('USD');
+  const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [amount, setAmount] = useState('1');
   const [showCalculator, setShowCalculator] = useState(false);
+  const [isReversed, setIsReversed] = useState(false);
 
   // Fetch user's country currency
   useEffect(() => {
@@ -24,7 +37,7 @@ const CryptoConverter = () => {
       .then(res => res.text())
       .then(currency => {
         if (currency && currency.length === 3) {
-          setUserCurrency(currency);
+          setSelectedCurrency(currency);
         }
       })
       .catch(() => {
@@ -32,18 +45,36 @@ const CryptoConverter = () => {
       });
   }, []);
 
+  // Load interstitial ad
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.innerHTML = `
+      let interstitialAd;
+      function loadInterstitial() {
+        interstitialAd = new google.ads.InterstitialAd();
+        interstitialAd.setAdUnitId('ca-app-pub-9162745056113716/6893087733');
+        interstitialAd.load();
+      }
+      loadInterstitial();
+    `;
+    document.head.appendChild(script);
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
   // Fetch crypto rate
   const { data: rateData, isLoading } = useQuery({
-    queryKey: ['cryptoRate', selectedCrypto, userCurrency],
+    queryKey: ['cryptoRate', selectedCrypto, selectedCurrency],
     queryFn: async () => {
       const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=${userCurrency.toLowerCase()}`
+        `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=${selectedCurrency.toLowerCase()}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch rate');
       }
       const data = await response.json();
-      return data[selectedCrypto][userCurrency.toLowerCase()];
+      return data[selectedCrypto][selectedCurrency.toLowerCase()];
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -55,8 +86,29 @@ const CryptoConverter = () => {
     }
   };
 
+  const handleShowCalculator = () => {
+    // Show interstitial ad when calculator is opened
+    try {
+      // @ts-ignore
+      if (window.interstitialAd && window.interstitialAd.isLoaded()) {
+        // @ts-ignore
+        window.interstitialAd.show();
+      }
+    } catch (err) {
+      console.error('Error showing interstitial ad:', err);
+    }
+    setShowCalculator(!showCalculator);
+  };
+
+  const toggleDirection = () => {
+    setIsReversed(!isReversed);
+  };
+
   const calculatedAmount = () => {
     if (!rateData || !amount) return '0';
+    if (isReversed) {
+      return (parseFloat(amount) / rateData).toFixed(8);
+    }
     return (parseFloat(amount) * rateData).toFixed(2);
   };
 
@@ -64,17 +116,71 @@ const CryptoConverter = () => {
     <div className="p-4 max-w-md mx-auto animate-fade-in">
       <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
         <div className="flex flex-col space-y-4">
-          <select
-            value={selectedCrypto}
-            onChange={(e) => setSelectedCrypto(e.target.value)}
-            className="p-2 border rounded-md bg-gray-50"
-          >
-            {MAJOR_CRYPTOS.map((crypto) => (
-              <option key={crypto.id} value={crypto.id}>
-                {crypto.symbol} - {crypto.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center space-x-2">
+            {!isReversed ? (
+              <>
+                <select
+                  value={selectedCrypto}
+                  onChange={(e) => setSelectedCrypto(e.target.value)}
+                  className="flex-1 p-2 border rounded-md bg-gray-50"
+                >
+                  {MAJOR_CRYPTOS.map((crypto) => (
+                    <option key={crypto.id} value={crypto.id}>
+                      {crypto.symbol} - {crypto.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={toggleDirection}
+                  className="p-2 rounded-full hover:bg-gray-100"
+                >
+                  <ArrowsUpDown className="w-5 h-5" />
+                </button>
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className="flex-1 p-2 border rounded-md bg-gray-50"
+                >
+                  {MAJOR_CURRENCIES.map((currency) => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.code} - {currency.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : (
+              <>
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className="flex-1 p-2 border rounded-md bg-gray-50"
+                >
+                  {MAJOR_CURRENCIES.map((currency) => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.code} - {currency.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={toggleDirection}
+                  className="p-2 rounded-full hover:bg-gray-100"
+                >
+                  <ArrowsUpDown className="w-5 h-5" />
+                </button>
+                <select
+                  value={selectedCrypto}
+                  onChange={(e) => setSelectedCrypto(e.target.value)}
+                  className="flex-1 p-2 border rounded-md bg-gray-50"
+                >
+                  {MAJOR_CRYPTOS.map((crypto) => (
+                    <option key={crypto.id} value={crypto.id}>
+                      {crypto.symbol} - {crypto.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
 
           <div className="text-center text-2xl font-bold">=</div>
 
@@ -90,7 +196,7 @@ const CryptoConverter = () => {
               {isLoading ? (
                 <div className="animate-pulse">Loading...</div>
               ) : (
-                `${calculatedAmount()} ${userCurrency}`
+                `${calculatedAmount()} ${isReversed ? MAJOR_CRYPTOS.find(c => c.id === selectedCrypto)?.symbol : selectedCurrency}`
               )}
             </div>
           </div>
@@ -98,7 +204,7 @@ const CryptoConverter = () => {
       </div>
 
       <button
-        onClick={() => setShowCalculator(!showCalculator)}
+        onClick={handleShowCalculator}
         className="w-full bg-primary text-white p-3 rounded-lg flex items-center justify-center gap-2 mb-4"
       >
         <Calculator className="w-5 h-5" />
