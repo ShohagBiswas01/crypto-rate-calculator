@@ -24,12 +24,20 @@ const MAJOR_CURRENCIES = [
   { code: 'INR', name: 'Indian Rupee' },
 ];
 
+interface Window {
+  google: any;
+  adsbygoogle: any[];
+  interstitialAd?: any;
+}
+
 const CryptoConverter = () => {
   const [selectedCrypto, setSelectedCrypto] = useState('tether');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [amount, setAmount] = useState('1');
   const [showCalculator, setShowCalculator] = useState(false);
   const [isReversed, setIsReversed] = useState(false);
+  const [customRate, setCustomRate] = useState<string>('');
+  const [useCustomRate, setUseCustomRate] = useState(false);
 
   // Fetch user's country currency
   useEffect(() => {
@@ -83,7 +91,8 @@ const CryptoConverter = () => {
       const data = await response.json();
       return data[selectedCrypto][selectedCurrency.toLowerCase()];
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
+    enabled: !useCustomRate, // Only fetch when not using custom rate
   });
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,8 +102,14 @@ const CryptoConverter = () => {
     }
   };
 
+  const handleCustomRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*\.?\d*$/.test(value) || value === '') {
+      setCustomRate(value);
+    }
+  };
+
   const handleShowCalculator = () => {
-    // Show interstitial ad when calculator is opened
     try {
       // @ts-ignore
       if (window.interstitialAd && window.interstitialAd.isLoaded()) {
@@ -111,18 +126,25 @@ const CryptoConverter = () => {
     setIsReversed(!isReversed);
   };
 
-  const calculatedAmount = () => {
-    if (!rateData || !amount) return '0';
-    if (isReversed) {
-      return (parseFloat(amount) / rateData).toFixed(8);
+  const toggleCustomRate = () => {
+    setUseCustomRate(!useCustomRate);
+    if (!useCustomRate) {
+      setCustomRate(rateData?.toString() || '');
     }
-    return (parseFloat(amount) * rateData).toFixed(2);
+  };
+
+  const calculatedAmount = () => {
+    const rate = useCustomRate ? parseFloat(customRate) : rateData;
+    if (!rate || !amount) return '0';
+    if (isReversed) {
+      return (parseFloat(amount) / rate).toFixed(8);
+    }
+    return (parseFloat(amount) * rate).toFixed(2);
   };
 
   return (
     <div className="w-full max-w-md mx-auto px-4 pb-20 animate-fade-in">
       <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
-        <div className="flex flex-col space-y-4">
           <div className="flex flex-col sm:flex-row items-center gap-2">
             {!isReversed ? (
               <>
@@ -220,6 +242,26 @@ const CryptoConverter = () => {
 
       {showCalculator && (
         <div className="bg-white rounded-lg shadow-lg p-4 animate-slide-up">
+          <div className="mb-4">
+            <label className="flex items-center gap-2 mb-2">
+              <input
+                type="checkbox"
+                checked={useCustomRate}
+                onChange={toggleCustomRate}
+                className="rounded border-gray-300"
+              />
+              <span>Use custom rate</span>
+            </label>
+            {useCustomRate && (
+              <input
+                type="text"
+                value={customRate}
+                onChange={handleCustomRateChange}
+                placeholder="Enter custom rate"
+                className="w-full p-2 border rounded-md mb-4"
+              />
+            )}
+          </div>
           <div className="grid grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0, 'C'].map((key) => (
               <button
