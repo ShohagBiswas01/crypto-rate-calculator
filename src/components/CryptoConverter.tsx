@@ -85,28 +85,34 @@ const CryptoConverter = () => {
       try {
         // Convert crypto and currency IDs to match Binance's format
         const cryptoSymbol = MAJOR_CRYPTOS.find(c => c.id === selectedCrypto)?.symbol;
-        const currencySymbol = selectedCurrency.toUpperCase();
         
-        // Use USDT as intermediate if direct pair doesn't exist
-        let symbol = `${cryptoSymbol}${currencySymbol}`;
-        let response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+        // First get crypto to USDT rate from Binance
+        const binanceResponse = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${cryptoSymbol}USDT`);
         
-        if (!response.ok) {
-          // If direct pair doesn't exist, try through USDT
-          const usdtResponse1 = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${cryptoSymbol}USDT`);
-          const usdtResponse2 = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=USDT${currencySymbol}`);
-          
-          if (usdtResponse1.ok && usdtResponse2.ok) {
-            const data1 = await usdtResponse1.json();
-            const data2 = await usdtResponse2.json();
-            return parseFloat(data1.price) * parseFloat(data2.price);
-          }
-          
-          throw new Error('Failed to fetch rate');
+        if (!binanceResponse.ok) {
+          throw new Error('Failed to fetch crypto rate from Binance');
         }
         
-        const data = await response.json();
-        return parseFloat(data.price);
+        const binanceData = await binanceResponse.json();
+        const cryptoToUSDT = parseFloat(binanceData.price);
+        
+        // If target currency is USD, return the USDT rate directly
+        if (selectedCurrency === 'USD') {
+          return cryptoToUSDT;
+        }
+        
+        // For other currencies, convert USDT to target currency using Exchange Rate API
+        const exchangeResponse = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
+        
+        if (!exchangeResponse.ok) {
+          throw new Error('Failed to fetch exchange rate');
+        }
+        
+        const exchangeData = await exchangeResponse.json();
+        const usdToTarget = exchangeData.rates[selectedCurrency];
+        
+        // Return final converted rate
+        return cryptoToUSDT * usdToTarget;
       } catch (error) {
         console.error('Error fetching rate:', error);
         return null;
