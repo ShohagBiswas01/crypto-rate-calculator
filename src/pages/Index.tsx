@@ -3,7 +3,9 @@ import CryptoConverter from '@/components/CryptoConverter';
 
 declare global {
   interface Window {
+    google: any;
     adsbygoogle: any[];
+    interstitialAd?: any;
   }
 }
 
