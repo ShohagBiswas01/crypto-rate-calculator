@@ -11,18 +11,23 @@ declare global {
 
 const Index = () => {
   useEffect(() => {
-    // Initialize AdMob
+    // Initialize AdMob with error handling
     const script = document.createElement('script');
-    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9162745056113716';
+    script.src = 'https://pagead2.googlesyndecode.com/pagead/js/adsbygoogle.js?client=ca-pub-9162745056113716';
     script.async = true;
     script.crossOrigin = 'anonymous';
+    script.onerror = () => {
+      console.log('AdSense failed to load in development environment');
+    };
     document.head.appendChild(script);
 
-    // Initialize banner ad
+    // Initialize banner ad with error handling
     try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      if (process.env.NODE_ENV === 'production') {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
     } catch (err) {
-      console.error('AdMob error:', err);
+      console.log('AdSense initialization skipped in development');
     }
   }, []);
 
@@ -36,15 +41,16 @@ const Index = () => {
         <CryptoConverter />
       </main>
 
-      {/* AdMob Banner */}
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block' }}
-        data-ad-client="ca-pub-9162745056113716"
-        data-ad-slot="1821590421"
-        data-ad-format="auto"
-        data-full-width-responsive="true"
-      />
+      {process.env.NODE_ENV === 'production' && (
+        <ins
+          className="adsbygoogle"
+          style={{ display: 'block' }}
+          data-ad-client="ca-pub-9162745056113716"
+          data-ad-slot="1821590421"
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
+      )}
     </div>
   );
 };
