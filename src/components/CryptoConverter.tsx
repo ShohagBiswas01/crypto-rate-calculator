@@ -82,20 +82,39 @@ const CryptoConverter = () => {
   const { data: rateData, isLoading } = useQuery({
     queryKey: ['cryptoRate', selectedCrypto, selectedCurrency],
     queryFn: async () => {
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=${selectedCurrency.toLowerCase()}`
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch rate');
+      try {
+        // Convert crypto and currency IDs to match Binance's format
+        const cryptoSymbol = MAJOR_CRYPTOS.find(c => c.id === selectedCrypto)?.symbol;
+        const currencySymbol = selectedCurrency.toUpperCase();
+        
+        // Use USDT as intermediate if direct pair doesn't exist
+        let symbol = `${cryptoSymbol}${currencySymbol}`;
+        let response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+        
+        if (!response.ok) {
+          // If direct pair doesn't exist, try through USDT
+          const usdtResponse1 = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${cryptoSymbol}USDT`);
+          const usdtResponse2 = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=USDT${currencySymbol}`);
+          
+          if (usdtResponse1.ok && usdtResponse2.ok) {
+            const data1 = await usdtResponse1.json();
+            const data2 = await usdtResponse2.json();
+            return parseFloat(data1.price) * parseFloat(data2.price);
+          }
+          
+          throw new Error('Failed to fetch rate');
+        }
+        
+        const data = await response.json();
+        return parseFloat(data.price);
+      } catch (error) {
+        console.error('Error fetching rate:', error);
+        return null;
       }
-      const data = await response.json();
-      return data[selectedCrypto][selectedCurrency.toLowerCase()];
     },
-    refetchInterval: 30000,
-    enabled: !useCustomRate,
+    refetchInterval: 10000, // Refresh every 10 seconds
+    staleTime: 5000, // Consider data stale after 5 seconds
     retry: 3,
-    staleTime: 30000,
-    initialData: null,
   });
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
