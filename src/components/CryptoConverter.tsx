@@ -229,15 +229,15 @@ const CryptoConverter = () => {
         </Alert>
       )}
       
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
+      <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4">
             {/* First Currency Container */}
-            <div className="flex items-center gap-4 p-4 border rounded-lg bg-gray-50">
+            <div className="flex flex-col sm:flex-row items-center gap-2 p-4 border rounded-lg bg-gray-50">
               <select
                 value={!isReversed ? selectedCrypto : selectedCurrency}
                 onChange={(e) => !isReversed ? setSelectedCrypto(e.target.value) : setSelectedCurrency(e.target.value)}
-                className="flex-1 p-2 border rounded-md bg-white text-sm min-w-[180px]"
+                className="w-full sm:w-48 p-2 border rounded-md bg-white text-sm"
               >
                 {!isReversed ? 
                   MAJOR_CRYPTOS.map((crypto) => (
@@ -256,13 +256,13 @@ const CryptoConverter = () => {
                 type="text"
                 value={amount}
                 onChange={handleAmountChange}
-                className="w-32"
+                className="w-full sm:w-32 text-right"
                 placeholder="Amount"
               />
             </div>
 
             {/* Equals Sign */}
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center py-2">
               <button
                 onClick={toggleDirection}
                 className="p-2 rounded-full hover:bg-gray-100 transition-all"
@@ -272,11 +272,11 @@ const CryptoConverter = () => {
             </div>
 
             {/* Second Currency Container */}
-            <div className="flex items-center gap-4 p-4 border rounded-lg bg-gray-50">
+            <div className="flex flex-col sm:flex-row items-center gap-2 p-4 border rounded-lg bg-gray-50">
               <select
                 value={!isReversed ? selectedCurrency : selectedCrypto}
                 onChange={(e) => !isReversed ? setSelectedCurrency(e.target.value) : setSelectedCrypto(e.target.value)}
-                className="flex-1 p-2 border rounded-md bg-white text-sm min-w-[180px]"
+                className="w-full sm:w-48 p-2 border rounded-md bg-white text-sm"
               >
                 {!isReversed ?
                   MAJOR_CURRENCIES.map((currency) => (
@@ -291,7 +291,7 @@ const CryptoConverter = () => {
                   ))
                 }
               </select>
-              <div className="w-32 p-2 border rounded-md bg-white text-right">
+              <div className="w-full sm:w-32 p-2 border rounded-md bg-white text-right">
                 {isLoading ? (
                   <div className="animate-pulse">...</div>
                 ) : (
