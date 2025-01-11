@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Calculator, ArrowUpDown } from 'lucide-react';
-
-declare global {
-  interface Window {
-    google: any;
-    adsbygoogle: any[];
-    interstitialAd?: any;
-  }
-}
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const MAJOR_CRYPTOS = [
   { id: 'tether', symbol: 'USDT', name: 'Tether' },
@@ -79,7 +72,7 @@ const CryptoConverter = () => {
     };
   }, []);
 
-  const { data: rateData, isLoading } = useQuery({
+  const { data: rateData, isLoading, error } = useQuery({
     queryKey: ['cryptoRate', selectedCrypto, selectedCurrency],
     queryFn: async () => {
       try {
@@ -110,44 +103,69 @@ const CryptoConverter = () => {
           throw new Error('Max retries reached');
         };
 
-        // First try CoinGecko API with retry logic
-        const coingeckoResponse = await fetchWithRetry(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=usd`
-        );
-        
-        const coingeckoData = await coingeckoResponse.json();
-        if (!coingeckoData[selectedCrypto]?.usd) {
-          throw new Error('Invalid response from CoinGecko');
+        // Try CoinGecko API first
+        try {
+          const coingeckoResponse = await fetchWithRetry(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=usd`
+          );
+          const coingeckoData = await coingeckoResponse.json();
+          if (coingeckoData[selectedCrypto]?.usd) {
+            const cryptoToUSD = coingeckoData[selectedCrypto].usd;
+            
+            // If target currency is USD, return the rate directly
+            if (selectedCurrency === 'USD') {
+              return cryptoToUSD;
+            }
+
+            // Convert USD to target currency
+            const exchangeResponse = await fetchWithRetry(
+              'https://api.exchangerate-api.com/v4/latest/USD'
+            );
+            const exchangeData = await exchangeResponse.json();
+            if (!exchangeData.rates?.[selectedCurrency]) {
+              throw new Error('Invalid exchange rate response');
+            }
+            return cryptoToUSD * exchangeData.rates[selectedCurrency];
+          }
+        } catch (error) {
+          console.log('CoinGecko API failed, trying CryptoCompare...');
         }
+
+        // Fallback to CryptoCompare API if CoinGecko fails
+        const cryptoSymbol = MAJOR_CRYPTOS.find(c => c.id === selectedCrypto)?.symbol || '';
+        const cryptoCompareResponse = await fetchWithRetry(
+          `https://min-api.cryptocompare.com/data/price?fsym=${cryptoSymbol}&tsyms=USD`
+        );
+        const cryptoCompareData = await cryptoCompareResponse.json();
         
-        const cryptoToUSD = coingeckoData[selectedCrypto].usd;
-        
+        if (!cryptoCompareData.USD) {
+          throw new Error('Invalid response from CryptoCompare');
+        }
+
+        const cryptoToUSD = cryptoCompareData.USD;
+
         // If target currency is USD, return the rate directly
         if (selectedCurrency === 'USD') {
           return cryptoToUSD;
         }
-        
-        // For other currencies, convert USD to target currency using Exchange Rate API
+
+        // Convert USD to target currency
         const exchangeResponse = await fetchWithRetry(
           'https://api.exchangerate-api.com/v4/latest/USD'
         );
-        
         const exchangeData = await exchangeResponse.json();
         if (!exchangeData.rates?.[selectedCurrency]) {
           throw new Error('Invalid exchange rate response');
         }
-        
-        const usdToTarget = exchangeData.rates[selectedCurrency];
-        
-        // Return final converted rate
-        return cryptoToUSD * usdToTarget;
+
+        return cryptoToUSD * exchangeData.rates[selectedCurrency];
       } catch (error) {
         console.error('Error fetching rate:', error);
-        return null;
+        throw error;
       }
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
-    staleTime: 20000, // Consider data stale after 20 seconds
+    refetchInterval: 60000, // Refresh every minute to avoid rate limits
+    staleTime: 30000, // Consider data stale after 30 seconds
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000),
   });
@@ -202,6 +220,14 @@ const CryptoConverter = () => {
 
   return (
     <div className="w-full max-w-md mx-auto px-4 pb-20 animate-fade-in">
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
+            Unable to fetch current rates. Please try again later.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div className="flex flex-col sm:flex-row items-center gap-2">
           {!isReversed ? (
