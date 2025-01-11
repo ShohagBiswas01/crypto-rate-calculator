@@ -88,14 +88,32 @@ const CryptoConverter = () => {
           return 1;
         }
 
-        // First get crypto price in USD from CoinGecko
-        const coingeckoResponse = await fetch(
+        // Function to handle retries with exponential backoff
+        const fetchWithRetry = async (url: string, retries = 3, delay = 1000) => {
+          for (let i = 0; i < retries; i++) {
+            try {
+              const response = await fetch(url);
+              if (response.ok) {
+                return response;
+              }
+              // If rate limited, wait longer before retry
+              if (response.status === 429) {
+                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                continue;
+              }
+              throw new Error(`HTTP error! status: ${response.status}`);
+            } catch (error) {
+              if (i === retries - 1) throw error;
+              await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+            }
+          }
+          throw new Error('Max retries reached');
+        };
+
+        // First try CoinGecko API with retry logic
+        const coingeckoResponse = await fetchWithRetry(
           `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=usd`
         );
-        
-        if (!coingeckoResponse.ok) {
-          throw new Error(`Failed to fetch crypto price from CoinGecko: ${coingeckoResponse.statusText}`);
-        }
         
         const coingeckoData = await coingeckoResponse.json();
         if (!coingeckoData[selectedCrypto]?.usd) {
@@ -110,11 +128,9 @@ const CryptoConverter = () => {
         }
         
         // For other currencies, convert USD to target currency using Exchange Rate API
-        const exchangeResponse = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
-        
-        if (!exchangeResponse.ok) {
-          throw new Error(`Failed to fetch exchange rate: ${exchangeResponse.statusText}`);
-        }
+        const exchangeResponse = await fetchWithRetry(
+          'https://api.exchangerate-api.com/v4/latest/USD'
+        );
         
         const exchangeData = await exchangeResponse.json();
         if (!exchangeData.rates?.[selectedCurrency]) {
@@ -130,9 +146,10 @@ const CryptoConverter = () => {
         return null;
       }
     },
-    refetchInterval: 30000, // Refresh every 30 seconds (CoinGecko has rate limits)
-    staleTime: 10000, // Consider data stale after 10 seconds
+    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 20000, // Consider data stale after 20 seconds
     retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000),
   });
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
