@@ -23,12 +23,6 @@ const MAJOR_CURRENCIES = [
   { code: 'INR', name: 'Indian Rupee' },
 ];
 
-interface Window {
-  google: any;
-  adsbygoogle: any[];
-  interstitialAd?: any;
-}
-
 const CryptoConverter = () => {
   const [selectedCrypto, setSelectedCrypto] = useState('tether');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
@@ -91,6 +85,9 @@ const CryptoConverter = () => {
     },
     refetchInterval: 30000,
     enabled: !useCustomRate,
+    retry: 3,
+    staleTime: 30000,
+    initialData: null,
   });
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,14 +123,15 @@ const CryptoConverter = () => {
 
   const toggleCustomRate = () => {
     setUseCustomRate(!useCustomRate);
-    if (!useCustomRate) {
-      setCustomRate(rateData?.toString() || '');
+    if (!useCustomRate && rateData) {
+      setCustomRate(rateData.toString());
     }
   };
 
   const calculatedAmount = () => {
     const rate = useCustomRate ? parseFloat(customRate) : rateData;
-    if (!rate || !amount) return '0';
+    if (!rate || isNaN(parseFloat(amount))) return '0';
+    
     if (isReversed) {
       return (parseFloat(amount) / rate).toFixed(8);
     }
