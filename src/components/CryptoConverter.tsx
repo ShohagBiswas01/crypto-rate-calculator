@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Calculator, ArrowUpDown } from 'lucide-react';
 
+declare global {
+  interface Window {
+    google: any;
+    adsbygoogle: any[];
+    interstitialAd?: any;
+  }
+}
+
 const MAJOR_CRYPTOS = [
   { id: 'tether', symbol: 'USDT', name: 'Tether' },
   { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
