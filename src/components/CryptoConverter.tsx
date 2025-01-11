@@ -230,117 +230,80 @@ const CryptoConverter = () => {
       )}
       
       <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
-        <div className="space-y-4">
-          {!isReversed ? (
-            <>
-              <div className="flex items-center gap-3">
-                <select
-                  value={selectedCrypto}
-                  onChange={(e) => setSelectedCrypto(e.target.value)}
-                  className="flex-1 p-2 border rounded-md bg-gray-50 text-sm"
-                >
-                  {MAJOR_CRYPTOS.map((crypto) => (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4">
+            {/* First Currency Container */}
+            <div className="flex items-center gap-4 p-4 border rounded-lg bg-gray-50">
+              <select
+                value={!isReversed ? selectedCrypto : selectedCurrency}
+                onChange={(e) => !isReversed ? setSelectedCrypto(e.target.value) : setSelectedCurrency(e.target.value)}
+                className="flex-1 p-2 border rounded-md bg-white text-sm min-w-[180px]"
+              >
+                {!isReversed ? 
+                  MAJOR_CRYPTOS.map((crypto) => (
                     <option key={crypto.id} value={crypto.id}>
                       {crypto.symbol} - {crypto.name}
                     </option>
-                  ))}
-                </select>
-                <Input
-                  type="text"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  className="w-32"
-                  placeholder="Amount"
-                />
-              </div>
-
-              <div className="flex justify-center">
-                <button
-                  onClick={toggleDirection}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <ArrowUpDown className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="flex-1 p-2 border rounded-md bg-gray-50 text-sm"
-                >
-                  {MAJOR_CURRENCIES.map((currency) => (
+                  )) :
+                  MAJOR_CURRENCIES.map((currency) => (
                     <option key={currency.code} value={currency.code}>
                       {currency.code} - {currency.name}
                     </option>
-                  ))}
-                </select>
-                <div className="w-32 p-2 border rounded-md bg-gray-50 text-right">
-                  {isLoading ? (
-                    <div className="animate-pulse">...</div>
-                  ) : (
-                    calculatedAmount()
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-3">
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="flex-1 p-2 border rounded-md bg-gray-50 text-sm"
-                >
-                  {MAJOR_CURRENCIES.map((currency) => (
+                  ))
+                }
+              </select>
+              <Input
+                type="text"
+                value={amount}
+                onChange={handleAmountChange}
+                className="w-32"
+                placeholder="Amount"
+              />
+            </div>
+
+            {/* Equals Sign */}
+            <div className="flex justify-center items-center">
+              <button
+                onClick={toggleDirection}
+                className="p-2 rounded-full hover:bg-gray-100 transition-all"
+              >
+                <ArrowUpDown className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Second Currency Container */}
+            <div className="flex items-center gap-4 p-4 border rounded-lg bg-gray-50">
+              <select
+                value={!isReversed ? selectedCurrency : selectedCrypto}
+                onChange={(e) => !isReversed ? setSelectedCurrency(e.target.value) : setSelectedCrypto(e.target.value)}
+                className="flex-1 p-2 border rounded-md bg-white text-sm min-w-[180px]"
+              >
+                {!isReversed ?
+                  MAJOR_CURRENCIES.map((currency) => (
                     <option key={currency.code} value={currency.code}>
                       {currency.code} - {currency.name}
                     </option>
-                  ))}
-                </select>
-                <Input
-                  type="text"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  className="w-32"
-                  placeholder="Amount"
-                />
-              </div>
-
-              <div className="flex justify-center">
-                <button
-                  onClick={toggleDirection}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <ArrowUpDown className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <select
-                  value={selectedCrypto}
-                  onChange={(e) => setSelectedCrypto(e.target.value)}
-                  className="flex-1 p-2 border rounded-md bg-gray-50 text-sm"
-                >
-                  {MAJOR_CRYPTOS.map((crypto) => (
+                  )) :
+                  MAJOR_CRYPTOS.map((crypto) => (
                     <option key={crypto.id} value={crypto.id}>
                       {crypto.symbol} - {crypto.name}
                     </option>
-                  ))}
-                </select>
-                <div className="w-32 p-2 border rounded-md bg-gray-50 text-right">
-                  {isLoading ? (
-                    <div className="animate-pulse">...</div>
-                  ) : (
-                    calculatedAmount()
-                  )}
-                </div>
+                  ))
+                }
+              </select>
+              <div className="w-32 p-2 border rounded-md bg-white text-right">
+                {isLoading ? (
+                  <div className="animate-pulse">...</div>
+                ) : (
+                  calculatedAmount()
+                )}
               </div>
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Calculator Button and Panel */}
       <button
         onClick={handleShowCalculator}
         className="w-full bg-primary text-white p-3 rounded-lg flex items-center justify-center gap-2 mb-4"
