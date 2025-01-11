@@ -83,16 +83,25 @@ const CryptoConverter = () => {
     queryKey: ['cryptoRate', selectedCrypto, selectedCurrency],
     queryFn: async () => {
       try {
+        // Special case: if the crypto is USDT and currency is USD, return 1
+        if (selectedCrypto === 'tether' && selectedCurrency === 'USD') {
+          return 1;
+        }
+
         // First get crypto price in USD from CoinGecko
         const coingeckoResponse = await fetch(
           `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=usd`
         );
         
         if (!coingeckoResponse.ok) {
-          throw new Error('Failed to fetch crypto price from CoinGecko');
+          throw new Error(`Failed to fetch crypto price from CoinGecko: ${coingeckoResponse.statusText}`);
         }
         
         const coingeckoData = await coingeckoResponse.json();
+        if (!coingeckoData[selectedCrypto]?.usd) {
+          throw new Error('Invalid response from CoinGecko');
+        }
+        
         const cryptoToUSD = coingeckoData[selectedCrypto].usd;
         
         // If target currency is USD, return the rate directly
@@ -104,10 +113,14 @@ const CryptoConverter = () => {
         const exchangeResponse = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
         
         if (!exchangeResponse.ok) {
-          throw new Error('Failed to fetch exchange rate');
+          throw new Error(`Failed to fetch exchange rate: ${exchangeResponse.statusText}`);
         }
         
         const exchangeData = await exchangeResponse.json();
+        if (!exchangeData.rates?.[selectedCurrency]) {
+          throw new Error('Invalid exchange rate response');
+        }
+        
         const usdToTarget = exchangeData.rates[selectedCurrency];
         
         // Return final converted rate
