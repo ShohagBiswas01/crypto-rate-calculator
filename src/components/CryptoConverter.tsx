@@ -83,25 +83,24 @@ const CryptoConverter = () => {
     queryKey: ['cryptoRate', selectedCrypto, selectedCurrency],
     queryFn: async () => {
       try {
-        // Convert crypto and currency IDs to match Binance's format
-        const cryptoSymbol = MAJOR_CRYPTOS.find(c => c.id === selectedCrypto)?.symbol;
+        // First get crypto price in USD from CoinGecko
+        const coingeckoResponse = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=usd`
+        );
         
-        // First get crypto to USDT rate from Binance
-        const binanceResponse = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${cryptoSymbol}USDT`);
-        
-        if (!binanceResponse.ok) {
-          throw new Error('Failed to fetch crypto rate from Binance');
+        if (!coingeckoResponse.ok) {
+          throw new Error('Failed to fetch crypto price from CoinGecko');
         }
         
-        const binanceData = await binanceResponse.json();
-        const cryptoToUSDT = parseFloat(binanceData.price);
+        const coingeckoData = await coingeckoResponse.json();
+        const cryptoToUSD = coingeckoData[selectedCrypto].usd;
         
-        // If target currency is USD, return the USDT rate directly
+        // If target currency is USD, return the rate directly
         if (selectedCurrency === 'USD') {
-          return cryptoToUSDT;
+          return cryptoToUSD;
         }
         
-        // For other currencies, convert USDT to target currency using Exchange Rate API
+        // For other currencies, convert USD to target currency using Exchange Rate API
         const exchangeResponse = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
         
         if (!exchangeResponse.ok) {
@@ -112,14 +111,14 @@ const CryptoConverter = () => {
         const usdToTarget = exchangeData.rates[selectedCurrency];
         
         // Return final converted rate
-        return cryptoToUSDT * usdToTarget;
+        return cryptoToUSD * usdToTarget;
       } catch (error) {
         console.error('Error fetching rate:', error);
         return null;
       }
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
-    staleTime: 5000, // Consider data stale after 5 seconds
+    refetchInterval: 30000, // Refresh every 30 seconds (CoinGecko has rate limits)
+    staleTime: 10000, // Consider data stale after 10 seconds
     retry: 3,
   });
 
