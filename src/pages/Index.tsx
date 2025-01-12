@@ -9,7 +9,7 @@ const Index = () => {
         <h1 className="text-2xl font-bold text-center">Crypto Rate</h1>
       </header>
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 space-y-4">
         <CryptoConverter />
         <ReservationTime />
       </main>
