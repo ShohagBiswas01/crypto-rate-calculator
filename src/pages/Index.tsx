@@ -12,7 +12,7 @@ const Index = () => {
       <main className="container mx-auto px-2 py-2 max-w-full overflow-hidden">
         <div className="space-y-0 flex flex-col">
           <CryptoConverter />
-          <div className="-mt-8">
+          <div className="-mt-12">
             <ReservationTime />
           </div>
         </div>

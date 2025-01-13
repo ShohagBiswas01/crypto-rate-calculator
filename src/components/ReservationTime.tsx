@@ -63,7 +63,7 @@ const ReservationTime = () => {
 
   return (
     <Card className="w-full max-w-2xl mx-auto overflow-hidden animate-fade-in">
-      <CardContent className="p-6">
+      <CardContent className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
             <Clock className="h-6 w-6" />
