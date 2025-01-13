@@ -10,9 +10,11 @@ const Index = () => {
       </header>
       
       <main className="container mx-auto px-2 py-2 max-w-full overflow-hidden">
-        <div className="space-y-0">
+        <div className="space-y-0 flex flex-col">
           <CryptoConverter />
-          <ReservationTime />
+          <div className="-mt-4">
+            <ReservationTime />
+          </div>
         </div>
       </main>
     </div>
