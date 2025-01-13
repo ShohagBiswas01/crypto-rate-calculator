@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Calculator, ArrowUpDown } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 const MAJOR_CRYPTOS = [
   { id: 'tether', symbol: 'USDT', name: 'Tether' },
@@ -73,6 +74,8 @@ const CryptoConverter = () => {
     };
   }, []);
 
+  const { toast } = useToast();
+
   const { data: rateData, isLoading, error } = useQuery({
     queryKey: ['cryptoRate', selectedCrypto, selectedCurrency],
     queryFn: async () => {
@@ -82,90 +85,109 @@ const CryptoConverter = () => {
           return 1;
         }
 
-        // Function to handle retries with exponential backoff
-        const fetchWithRetry = async (url: string, retries = 3, delay = 1000) => {
-          for (let i = 0; i < retries; i++) {
-            try {
-              const response = await fetch(url);
-              if (response.ok) {
-                return response;
-              }
-              // If rate limited, wait longer before retry
-              if (response.status === 429) {
-                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
-                continue;
-              }
-              throw new Error(`HTTP error! status: ${response.status}`);
-            } catch (error) {
-              if (i === retries - 1) throw error;
-              await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
-            }
-          }
-          throw new Error('Max retries reached');
-        };
-
-        // Try CoinGecko API first
-        try {
-          const coingeckoResponse = await fetchWithRetry(
-            `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=usd`
-          );
-          const coingeckoData = await coingeckoResponse.json();
-          if (coingeckoData[selectedCrypto]?.usd) {
-            const cryptoToUSD = coingeckoData[selectedCrypto].usd;
-            
-            // If target currency is USD, return the rate directly
-            if (selectedCurrency === 'USD') {
-              return cryptoToUSD;
-            }
-
-            // Convert USD to target currency
-            const exchangeResponse = await fetchWithRetry(
-              'https://api.exchangerate-api.com/v4/latest/USD'
-            );
-            const exchangeData = await exchangeResponse.json();
-            if (!exchangeData.rates?.[selectedCurrency]) {
-              throw new Error('Invalid exchange rate response');
-            }
-            return cryptoToUSD * exchangeData.rates[selectedCurrency];
-          }
-        } catch (error) {
-          console.log('CoinGecko API failed, trying CryptoCompare...');
-        }
-
-        // Fallback to CryptoCompare API if CoinGecko fails
         const cryptoSymbol = MAJOR_CRYPTOS.find(c => c.id === selectedCrypto)?.symbol || '';
-        const cryptoCompareResponse = await fetchWithRetry(
-          `https://min-api.cryptocompare.com/data/price?fsym=${cryptoSymbol}&tsyms=USD`
+
+        // Try CryptoCompare API first (switching primary API)
+        try {
+          const cryptoCompareResponse = await fetch(
+            `https://min-api.cryptocompare.com/data/price?fsym=${cryptoSymbol}&tsyms=USD`
+          );
+          
+          if (!cryptoCompareResponse.ok) {
+            throw new Error('CryptoCompare API failed');
+          }
+          
+          const cryptoCompareData = await cryptoCompareResponse.json();
+          
+          if (!cryptoCompareData.USD) {
+            throw new Error('Invalid response from CryptoCompare');
+          }
+
+          const cryptoToUSD = cryptoCompareData.USD;
+
+          // If target currency is USD, return the rate directly
+          if (selectedCurrency === 'USD') {
+            return cryptoToUSD;
+          }
+
+          // Convert USD to target currency
+          const exchangeResponse = await fetch(
+            'https://api.exchangerate-api.com/v4/latest/USD'
+          );
+          
+          if (!exchangeResponse.ok) {
+            throw new Error('Exchange rate API failed');
+          }
+          
+          const exchangeData = await exchangeResponse.json();
+          if (!exchangeData.rates?.[selectedCurrency]) {
+            throw new Error('Invalid exchange rate response');
+          }
+
+          return cryptoToUSD * exchangeData.rates[selectedCurrency];
+        } catch (error) {
+          console.log('CryptoCompare API failed, trying CoinGecko...');
+          toast({
+            title: "Primary API Failed",
+            description: "Trying alternative data source...",
+            duration: 3000,
+          });
+        }
+
+        // Fallback to CoinGecko API
+        const coingeckoResponse = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${selectedCrypto}&vs_currencies=usd`,
+          {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'CryptoConverter/1.0'
+            }
+          }
         );
-        const cryptoCompareData = await cryptoCompareResponse.json();
+
+        if (!coingeckoResponse.ok) {
+          throw new Error(`CoinGecko API failed with status: ${coingeckoResponse.status}`);
+        }
+
+        const coingeckoData = await coingeckoResponse.json();
+        if (coingeckoData[selectedCrypto]?.usd) {
+          const cryptoToUSD = coingeckoData[selectedCrypto].usd;
+          
+          // If target currency is USD, return the rate directly
+          if (selectedCurrency === 'USD') {
+            return cryptoToUSD;
+          }
+
+          // Convert USD to target currency
+          const exchangeResponse = await fetch(
+            'https://api.exchangerate-api.com/v4/latest/USD'
+          );
+          
+          if (!exchangeResponse.ok) {
+            throw new Error('Exchange rate API failed');
+          }
+          
+          const exchangeData = await exchangeResponse.json();
+          if (!exchangeData.rates?.[selectedCurrency]) {
+            throw new Error('Invalid exchange rate response');
+          }
+
+          return cryptoToUSD * exchangeData.rates[selectedCurrency];
+        }
         
-        if (!cryptoCompareData.USD) {
-          throw new Error('Invalid response from CryptoCompare');
-        }
-
-        const cryptoToUSD = cryptoCompareData.USD;
-
-        // If target currency is USD, return the rate directly
-        if (selectedCurrency === 'USD') {
-          return cryptoToUSD;
-        }
-
-        // Convert USD to target currency
-        const exchangeResponse = await fetchWithRetry(
-          'https://api.exchangerate-api.com/v4/latest/USD'
-        );
-        const exchangeData = await exchangeResponse.json();
-        if (!exchangeData.rates?.[selectedCurrency]) {
-          throw new Error('Invalid exchange rate response');
-        }
-
-        return cryptoToUSD * exchangeData.rates[selectedCurrency];
+        throw new Error('Unable to fetch crypto rate from any source');
       } catch (error) {
         console.error('Error fetching rate:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch current rates. Please try again later.",
+          duration: 5000,
+        });
         throw error;
       }
     },
-    refetchInterval: 60000, // Refresh every minute to avoid rate limits
+    refetchInterval: 60000, // Refresh every minute
     staleTime: 30000, // Consider data stale after 30 seconds
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000),
