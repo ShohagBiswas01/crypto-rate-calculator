@@ -7,11 +7,21 @@ const ReservationTime = () => {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const { toast } = useToast();
   
-  // Calculate the next reservation window (13:00 GMT)
+  // Generate random hour between 13 and 19
+  const getRandomHour = () => {
+    // Generate once per day using the current date as seed
+    const today = new Date().toDateString();
+    const seed = Array.from(today).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const random = Math.sin(seed) * 10000;
+    return Math.floor((random - Math.floor(random)) * 7) + 13; // 13 to 19
+  };
+  
+  // Calculate the next reservation window
   const calculateNextWindow = () => {
     const now = new Date();
     const target = new Date(now);
-    target.setUTCHours(13, 0, 0, 0);
+    const randomHour = getRandomHour();
+    target.setUTCHours(randomHour, 0, 0, 0);
     
     if (now.getTime() > target.getTime()) {
       target.setDate(target.getDate() + 1);
@@ -46,6 +56,11 @@ const ReservationTime = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const getFormattedReservationTime = () => {
+    const hour = getRandomHour();
+    return `${hour}:00 GMT`;
+  };
+
   return (
     <Card className="w-full max-w-2xl mx-auto overflow-hidden animate-fade-in">
       <CardContent className="p-6">
@@ -58,7 +73,7 @@ const ReservationTime = () => {
         
         <div className="bg-primary/5 rounded-lg p-4 mb-4">
           <div className="text-xl font-semibold text-center mb-2">
-            13:00 GMT
+            {getFormattedReservationTime()}
           </div>
           <div className="text-center text-sm text-muted-foreground">
             Next window in: <span className="font-mono text-primary">{formatTime(timeRemaining)}</span>
